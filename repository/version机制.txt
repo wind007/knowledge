@@ -1,0 +1,40 @@
+关于@version注解的机制实现 
+
+为了不被其他的代码影响 现在的代码 中 projectService 注释掉了 save方法
+增加了
+	@Transactional
+	public void saveBusinessEntity(Project project) {
+	//	 detach project
+		super.saveBusinessEntity(project);
+	}
+projectController 修改了
+	public String save(@ModelAttribute("project") Project project, @RequestParam(value = "keyProjectTypeId",
+		required = false) String[] keyProjectTypeIds, String attachmentsKey) {
+		
+		projectService.saveBusinessEntity(project);
+	
+		return Controllers.closeAndRefreshParentPage(Controllers.SAVED_SUCCESSFULLY);
+	}
+
+org.hibernate.engine.transaction.internal.jdbc.JdbcTransaction.beforeTransactionCommit() 这个方法调用
+transactionCoordinator().getTransactionContext().managedFlush(); 这段代码的时候 
+他调用了
+ org.hibernate.internal.SessionImpl.flush() 方法
+
+SessionImpl 类中 有PersistenceContext属性 该属性的entityEntryContext.reentrantSafeEntries 里存放了用于设置version的对象 
+
+然后在org.hibernate.event.internal.DefaultFlushEntityEventListener.getNextVersion() 方法中获取下一个版本
+
+
+org.hibernate.internal.SessionImpl 会话实例类 保留了当前会话的上下文 信息 
+同时保留了数据库当前信息和表单提交到内存的信息
+
+org.hibernate.event.internal.DefaultFlushEntityEventListener 实体flush的事件监听类  sessionImpl 会派发flush事件 到这里 然后会调用他的基类 一个抽象的flush事件监听类 org.hibernate.event.internal.AbstractFlushingEventListener.flushEverythingToExecutions()  中的该方法刷新sessionImpl。这个方法会 调用私有方法 prepareEntityFlushes(EventSource session, PersistenceContext persistenceContext) 去刷新 然后sessionImple.PersistenceContext.entityEntryContext.reentrantSafeEntries 属性就有值了
+
+org.hibernate.engine.internal.EntityEntryContext 实体条目上下文对象
+持久化对象上下文persistenceContext 可以通过 reentrantSafeEntityEntries 放回获得实体条目上下文对象的引用
+
+
+现在我的问题是 
+不知道为什么实体条目上下文对象会有持有数据库原始数据的引用，这个引用是什么set进去的
+

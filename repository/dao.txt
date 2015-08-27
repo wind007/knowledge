@@ -1,0 +1,28 @@
+﻿1.save
+save(Entity entity)
+save(List<Entity> entities)
+
+2.delete
+delete(Entity entity)
+delete(List<Entity> entities)
+
+3.List<Map> createNativeQuery(String procName,String[] in,String[] out)
+ 返回值为 ResultSet（以 select 形式返回的值）的存储过程，EJB3 不能调用以 OUT 参数返回值的存储过程。 
+ 
+4.select
+//根据属性放回单条记录
+Entity etUniqueByProp(String[]params,Object[] values) 
+//判断实体是否唯一
+boolean isUnique()(String[]params,Object[] values) 
+int countByProp(String[]params,Object[] values) 
+
+List<Map> selectBySql(String sql ,Object[] values)
+List<Entity> selectByHql(String sql ,Object[] values)
+
+Entity get(String id)
+
+5.page
+//分页和排序
+Pager queryPageAndSort(Query query ,int currentPage,int pageSize)
+//获取分页总数
+int getSumPage(Query)
